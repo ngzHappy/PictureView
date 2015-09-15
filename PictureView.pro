@@ -36,3 +36,4 @@ HEADERS  += \
 
 INCLUDEPATH += $$PWD
 
+MOC_DIR = $$PWD/moc

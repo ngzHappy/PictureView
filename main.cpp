@@ -14,7 +14,7 @@ int main(int argc, char *argv[])
     widget.show();
 
     return app.exec();
-
+	
 }
 
 /* 主文件结束 */

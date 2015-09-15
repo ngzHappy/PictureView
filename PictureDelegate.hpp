@@ -41,7 +41,7 @@ protected:
         const QModelIndex & index) override ;
     virtual void enterEvent(QEvent *)override ;
     virtual void beforeWidgetDelete() override;
-	AbstractItemWidget * PictureDelegate::instance(
+    AbstractItemWidget * instance(
 		QWidget * parent,
 		const QStyleOptionViewItem & option,
 		const QModelIndex & index
@@ -52,7 +52,6 @@ private:
     QImage backGroundImage;
     QString stringData;
     QPushButton * button;
-    bool isFirstPainted = false;
     QObject * objectManager = 0;
     bool isEnterEvent = false;
 private:

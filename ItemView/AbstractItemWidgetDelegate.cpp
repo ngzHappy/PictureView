@@ -12,6 +12,7 @@
 #include <QAbstractItemView>
 #include <map>
 #include <memory>
+#include <set>
 
 namespace {
 	namespace __AbstractItemWidgetDelegate {
@@ -144,8 +145,65 @@ public:
 		_GCFunction();
 	}
 private:
-	bool _isShowing( const QWidget * widget_ ,const QRect  & rRect_ ) {
 	
+	std::set<AbstractItemWidget *> childrenWidgets ;
+	
+	void _updateChildrenWidget(const QWidget * widget_) {
+		/*
+		此函数用于删除rect重复的项目
+		如果两个widgetrect重复保留最上面的元素
+		*/
+		if (0 == widget_) { return; }
+		auto & childrenWidgets_ = childrenWidgets;
+		childrenWidgets_.clear();
+		const auto & allChildren_ = widget_->children();
+
+		std::map< 
+			QRect, 
+			AbstractItemWidget *,
+			std::function<bool(const QRect &,const QRect&)> 
+		> about_unique_([](const QRect & l, const QRect& r)->bool {
+			if (l.x() < r.x()) { return true; }
+			if (r.x() < l.x()) { return false; }
+			if (l.y() < r.y()) { return true; }
+			if (r.y() < l.y()) { return false; }
+			if (l.width() < r.width()) { return true; }
+			if (r.width() < l.width()) { return false; }
+			if (l.height() < r.height()) { return true; }
+			if (r.height() < l.height()) { return false; }
+			return false;
+		});
+
+		{
+            //int index__ = 0;
+
+			typedef decltype(allChildren_.begin()) IT__;
+			typedef std::reverse_iterator< IT__ > RIT__;
+
+			RIT__ begin_( allChildren_.end() );
+			RIT__ end_( allChildren_.begin() );
+
+			for (;begin_!=end_; ++begin_) {
+				const auto & i = *begin_;
+				auto * isChildren_ = qobject_cast<AbstractItemWidget *>(i);
+				if (isChildren_) {
+					/*  
+					删除重复项 
+					*/
+					about_unique_.insert({isChildren_->finalRect(),isChildren_});
+				}
+			}
+		}
+
+		for (const auto &i:about_unique_) {
+			childrenWidgets_.insert( i.second );
+		}
+		
+	}
+	bool _isShowing( const QWidget * widget__ ,const QRect  & rRect_ ) {
+		const auto * widget_ = qobject_cast<const AbstractItemWidget *>(widget__);
+		if (0 == widget_) { return false; }
+	 
 		/*
 			增加边界
 			为"setPos"之类的动画服务
@@ -154,7 +212,7 @@ private:
 		*/
 		const auto && gValue_ = widget_->mapToGlobal(QPoint(-5, -5));
 		const auto && size_ = widget_->size() + QSize(10, 10);
-	
+			
 		return rRect_.intersects( QRect(gValue_,size_) );
 
 	}
@@ -174,6 +232,11 @@ private:
 
 		typedef std::shared_ptr< __AbstractItemWidgetDelegate::ManagerType::EditorItem > IT_;
 		std::list<IT_> tmp_pool;
+		
+		for (const auto &i : manager.data) {
+			auto * p = i.second->widget->parentWidget();
+			if (p) { _updateChildrenWidget(p); break; }
+		}
 
 		for (const auto &i : manager.data) {
 
@@ -182,20 +245,21 @@ private:
 				qDebug() << "!! is null";
 				continue;
 			}
+
 			auto pWidget_ = widget_->parentWidget();
 			if (0 == pWidget_) { 
 				qDebug() << "!! is null";
 				continue;
 			}
 			
-			if ( _isShowing(i.second->widget, rRect_) ) {
+			if ((childrenWidgets.count(widget_)>0)&&(_isShowing(widget_, rRect_)) ) {
 				tmp_pool.push_back(i.second);
 			}
 			else {
 				i.second->widget->beforeWidgetDelete();
 			}
-
 		}
+		
 		manager.data.clear();
 		for (const auto & i : tmp_pool) {
 			manager.data.insert({ i->index,i });

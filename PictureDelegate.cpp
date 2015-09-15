@@ -57,11 +57,8 @@ void PictureDelegate::paintEvent(QPaintEvent *)  {
 
 	if (false == isFirstPainted) {
 		/* 记录第一次绘制完成 */
-		if ( this->hasMouseTracking() ) {
-			isFirstPainted = true;
-			return _mouse_enter();
-		}
 		isFirstPainted = true;
+		return _mouse_enter();
 	}
     
 }
@@ -113,7 +110,7 @@ void PictureDelegate::_mouse_enter() {
 }
 
 void PictureDelegate::enterEvent(QEvent *)  {
- 
+	return _mouse_enter();
 }
 
 void PictureDelegate::beforeWidgetDelete()  {

@@ -19,6 +19,7 @@ protected:
     /* 记录item真实位置及大小,用于支持动画 */
     QRect finalRect_;
 public:
+
     const QRect & finalRect() const { return finalRect_; }
     /* 即将删除widget */
     virtual void beforeWidgetDelete() {}
@@ -31,8 +32,12 @@ public:
         this->setEditorData(index);
     }
 
-    /* paint */
-	virtual void paintEvent( QPaintEvent * )override  {}
+	/* 当第一次绘制完成要设置为true */
+	bool isFirstPainted = false;
+	/* paint */
+	virtual void paintEvent( QPaintEvent * )override  {
+		isFirstPainted = true;
+	}
 
     /* 设置模型数据 */
     virtual void setModelData(
