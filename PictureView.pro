@@ -6,6 +6,9 @@ QT       += widgets
 TARGET = PictureView
 TEMPLATE = app
 
+CONFIG(debug,debug|release){
+CONFIG += console
+}
 
 #sources
 SOURCES += main.cpp\

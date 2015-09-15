@@ -3,6 +3,7 @@
 #include "AbstractItemWidget.hpp"
 #include "AbstractItemWidgetView.hpp"
 #include "AbstractItemWidgetDelegate.hpp"
+#include <functional>
 
 /* 开始修改Model结构 */
 void
@@ -41,14 +42,31 @@ AbstractItemWidgetView::closePersistentEditorWidget(const QModelIndex &index){
 /* 设置模型 */
 void
 AbstractItemWidgetView::setItemWidgetModel(QAbstractItemModel * model )  {
-    if (model == 0) { return; }
-    auto * view_ = this->getWidgetItemView();
-    if(view_==0){ return; }
-    auto * m_ = view_->model();
-    if (m_ == model) { return; }
-    {
-        view_->setModel(model);
-    }
+
+/* 
+由于是虚函数 所以强制重用 
+*/
+#ifndef RETURN
+#define RETURN  return this->endChangeModelStruct() 
+#else
+#error "return can not be set!!"
+#endif
+
+	this->beginChangeModelStruct();
+	
+	auto * view_ = this->getWidgetItemView();
+	if (view_ == 0) { RETURN; }
+	auto * m_ = view_->model();
+
+	{
+		if (model == 0) { RETURN; }
+		if (m_ == model) { RETURN; }
+		{
+			view_->setModel(model);
+		}
+
+	}
+
     {
         {
             /* 关闭信号槽连接 */
@@ -105,6 +123,9 @@ AbstractItemWidgetView::setItemWidgetModel(QAbstractItemModel * model )  {
 
         }
     }
+
+	RETURN;
+#undef RETURN
 }
 
 /**/

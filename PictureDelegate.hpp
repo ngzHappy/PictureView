@@ -19,7 +19,8 @@
 #include <QTimer>
 
 
-class PictureDelegate :public  AbstractItemWidget{
+class PictureDelegate :
+	public  AbstractItemWidget{
     Q_OBJECT
 public:
     typedef AbstractItemWidget SuperType ;
@@ -30,15 +31,22 @@ public:
     PictureDelegate():PictureDelegate(nullptr){}
 
 protected:
+
     virtual void setEditorData(
         const QModelIndex & index
         )   override ;
-    virtual void paintEvent(QPaintEvent *)override ;
+    virtual void paintEvent( QPaintEvent * )override ;
     virtual void beforePaint(
         const QStyleOptionViewItem & option,
         const QModelIndex & index) override ;
     virtual void enterEvent(QEvent *)override ;
     virtual void beforeWidgetDelete() override;
+	AbstractItemWidget * PictureDelegate::instance(
+		QWidget * parent,
+		const QStyleOptionViewItem & option,
+		const QModelIndex & index
+		)override;
+
 private:
     QColor backGroundColor;
     QImage backGroundImage;
@@ -47,6 +55,8 @@ private:
     bool isFirstPainted = false;
     QObject * objectManager = 0;
     bool isEnterEvent = false;
+private:
+	void _mouse_enter();
 };
 
 

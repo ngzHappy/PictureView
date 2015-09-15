@@ -7,7 +7,7 @@
 #include <vector>
 
 class PictureModel :
-        public QAbstractItemModel{
+        public QAbstractItemModel {
     Q_OBJECT
 public:
 
@@ -36,7 +36,7 @@ public:
     }
 
     QModelIndex	parent(const QModelIndex &  ) const {
-        return this->createIndex(0,0);
+        return QModelIndex();
     }
 
     QVariant data(

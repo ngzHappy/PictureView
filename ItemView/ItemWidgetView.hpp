@@ -4,7 +4,9 @@
 #include "AbstractItemWidget.hpp"
 #include "AbstractItemWidgetDelegate.hpp"
 #include "AbstractItemWidgetView.hpp"
+#include <QAbstractItemView>
 #include <QEvent>
+#include <QScrollBar>
 
 template<typename ViewBaseType>
 class ItemWidgetView  :
@@ -19,15 +21,22 @@ public:
     }
 
     void beginChangeModelStruct(){
+		isOnChangingStruct = true;
         if(this->isAbstractItemWidgetViewOnDestory()){return;}
-        isOnChangingStruct=true;
         auto* d_ = qobject_cast<AbstractItemWidgetDelegate *>(this->itemDelegate());
-        if (d_) { d_->closeAllWidgetItem(); }
+        if (d_) { 
+			d_->stopGC();
+			d_->closeAllWidgetItem();
+		}
     }
 
     void endChangeModelStruct(){
+		isOnChangingStruct = false;
         if(this->isAbstractItemWidgetViewOnDestory()){return;}
-        isOnChangingStruct=false;
+		auto* d_ = qobject_cast<AbstractItemWidgetDelegate *>(this->itemDelegate());
+		if (d_) {
+			d_->startGC();
+		}
         this->viewport()->update();
     }
 
@@ -44,8 +53,19 @@ protected:
         }
         return ViewBaseType::viewportEvent(event);
     }
+
+
+
 public:
-    explicit ItemWidgetView( QWidget * s =0): ViewBaseType(s){}
+    explicit ItemWidgetView( QWidget * s =0): ViewBaseType(s){
+		QAbstractItemView * view_ = this;
+        QScrollBar * sb_ = view_->verticalScrollBar();
+        sb_->connect(sb_,&QScrollBar::valueChanged,
+                     [this](int){
+            this->viewport()->update();
+        }
+                     );
+    }
     ~ItemWidgetView() {
 		/* 关闭绘制体系 */
         isOnChangingStruct = true;

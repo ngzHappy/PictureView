@@ -18,6 +18,7 @@ void PictureModel::setModel(DataPoolType && d_){
     this->beginResetModel();
     data_ = std::move(d_);
     this->endResetModel();
+ 
 }
 
 void PictureModel::setModel(const DataPoolType & d_){
@@ -40,10 +41,10 @@ QVariant PictureModel::data(
     if(row_ >= rowCount(index) ){ return QVariant(); }
     const PictureModelItemData & id_ = data_[row_];
     switch (role) {
-	case Qt::DisplayRole: return id_.filePath ;
-	case Qt::SizeHintRole:return QSize(32,32);
+		case Qt::DisplayRole : return id_.filePath ;
+		case Qt::SizeHintRole:return QSize(32,32);
     }
-    return QVariant();
+    return QVariant() ;
 }
 
 /*  */

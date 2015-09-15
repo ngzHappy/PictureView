@@ -21,10 +21,23 @@ PictureDelegate::PictureDelegate(QWidget *p):
 void PictureDelegate::setEditorData(
     const QModelIndex & index
     )   {
+
     auto model = index.model();
     if (0 == model) { return; }
     stringData = model->data(index, Qt::DisplayRole).toString();
+
 }
+
+AbstractItemWidget * PictureDelegate::instance(
+	QWidget * parent,
+	const QStyleOptionViewItem & option,
+	const QModelIndex & index
+	) {
+	this->setParent(parent);
+	this->beforePaint(option, index);
+	return this;
+}
+
 
 void PictureDelegate::paintEvent(QPaintEvent *)  {
 
@@ -42,15 +55,23 @@ void PictureDelegate::paintEvent(QPaintEvent *)  {
     painter.setPen(color_);
     painter.drawText(20, 20, stringData);
 
-    isFirstPainted = true;
-
+	if (false == isFirstPainted) {
+		/* 记录第一次绘制完成 */
+		if ( this->hasMouseTracking() ) {
+			isFirstPainted = true;
+			return _mouse_enter();
+		}
+		isFirstPainted = true;
+	}
+    
 }
 
 void PictureDelegate::beforePaint(
     const QStyleOptionViewItem & option,
     const QModelIndex & index)   {
 
-    QImage backGroundImage_(option.rect.size(), QImage::Format_ARGB32_Premultiplied);
+	const auto && size_ = option.rect.size();
+    QImage backGroundImage_( size_, QImage::Format_ARGB32_Premultiplied );
     /*如果被选中*/
     if (option.state&QStyle::State_Selected) {
         backGroundImage_.fill(QColor(11, 111, 11));
@@ -71,9 +92,9 @@ void PictureDelegate::beforePaint(
 
 }
 
-void PictureDelegate::enterEvent(QEvent *)  {
+void PictureDelegate::_mouse_enter() {
 
-    if (objectManager == 0) { return; }
+	if (objectManager == 0) { return; }
     if (isFirstPainted == false) { return; }
     if (isEnterEvent) { return; }
 
@@ -89,7 +110,10 @@ void PictureDelegate::enterEvent(QEvent *)  {
         this->setGeometry(finalRect_);
     });
     animation->start(QPropertyAnimation::DeleteWhenStopped);
+}
 
+void PictureDelegate::enterEvent(QEvent *)  {
+ 
 }
 
 void PictureDelegate::beforeWidgetDelete()  {

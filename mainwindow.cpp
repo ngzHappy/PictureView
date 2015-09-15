@@ -4,6 +4,7 @@
 #include <QVBoxLayout>
 #include <QHBoxLayout>
 #include <QDebug>
+#include <QDesktopServices>
 /* 自定义库 */
 #include "MainWindow.hpp"
 #include "PictureListView.hpp"
@@ -70,12 +71,13 @@ public:
     void updatePath(){
 
     }
+
 };
 
 MainWindow::MainWindow(QWidget * p):SuperType(p){
     thisp = new ThisPrivate(this);
     /* 设置默认位置 */
-
+	
 }
 
 

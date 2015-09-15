@@ -24,6 +24,10 @@ public:
 	AbstractItemWidgetDelegate(AbstractItemWidgetView * v,const CreatEditorFunctionType & f, QObject *p):AbstractItemWidgetDelegate(v,p) {
 		setCreatEditorFunction(f);
 	}
+
+	/*  */
+	void stopGC();
+	void startGC();
 	 
     /* 析构函数 */
 	virtual ~AbstractItemWidgetDelegate();

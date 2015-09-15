@@ -31,6 +31,9 @@ public:
         this->setEditorData(index);
     }
 
+    /* paint */
+	virtual void paintEvent( QPaintEvent * )override  {}
+
     /* 设置模型数据 */
     virtual void setModelData(
             QAbstractItemModel * model,

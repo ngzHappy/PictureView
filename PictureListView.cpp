@@ -2,11 +2,10 @@
 #include "PictureListView.hpp"
 #include "PictureModel.hpp"
 #include <QFileInfo>
+#include <QStandardPaths>
 #include <QDir>
 #include <set>
-
-
-
+ 
 class PictureListView::ThisPrivate{
 public:
     typedef PictureModel::DataPoolType DataPoolType;
@@ -14,6 +13,7 @@ public:
     PictureModel * model ;
     AbstractItemWidgetDelegate * delegate ;
     ThisPrivate(PictureListView * s):super(s){
+		super->thisp = this;
         model = new PictureModel(super);
         delegate = new AbstractItemWidgetDelegate(
                     super,
@@ -22,8 +22,10 @@ public:
                     },
                     super
                     );
+				
         super->setItemDelegate(delegate);
-        super->setItemWidgetModel(model);
+		super->setItemWidgetModel(model);
+
     }
 
     ~ThisPrivate(){
@@ -66,7 +68,16 @@ public:
         typedef PictureModel::DataPoolType DT_;
         DT_ data_pool ;
         initData(data_pool,arg_path);
-        model->setModel( std::move( data_pool ) );
+		auto * model_ = new PictureModel(super);
+		model_->setModel(data_pool);
+	 
+		super->setItemWidgetModel( model_ );
+		
+		if (model) {
+			/* 立即删除model */
+			delete model ;
+		}
+		model = model_;
 
     }
 

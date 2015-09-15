@@ -124,23 +124,52 @@ public:
 		});
 	}
 
-	void GCFunction() { _GCFunction(); }
+#ifdef _DEBUG
+	int gcDataSize = 0;
+#endif
+
+	void GCFunction() { 
+#ifdef _DEBUG
+		do {
+			int gcDataSizeAgo = gcDataSize;
+			gcDataSize = int(manager.data.size());
+			if ( gcDataSize == gcDataSizeAgo) {
+				break;
+			}
+			else {
+				qDebug() << "data size:" << gcDataSize;
+			}
+		} while (0);
+#endif
+		_GCFunction();
+	}
 private:
+	bool _isShowing( const QWidget * widget_ ,const QRect  & rRect_ ) {
+	
+		/*
+			增加边界
+			为"setPos"之类的动画服务
+			此类动画幅度不要超过5
+			否则可能出现逻辑错误
+		*/
+		const auto && gValue_ = widget_->mapToGlobal(QPoint(-5, -5));
+		const auto && size_ = widget_->size() + QSize(10, 10);
+	
+		return rRect_.intersects( QRect(gValue_,size_) );
+
+	}
 	void _GCFunction() {
 		if (*isOnDestory) { return; }
 		/*
-		采用 global(桌面) 坐标系
 		采用 停止复制法
+		采用全局坐标系
 		*/
 		QRect rRect_;
-		
 		{
 			auto * v__ = super->view->getWidgetItemView();
-			const auto * vsb_ = v__->verticalScrollBar();
-			const auto && vValue_ = vsb_->value();
 			rRect_ = v__->rect();
 			const auto && gValue_ = v__->mapToGlobal(QPoint(0, 0));
-			rRect_ = QRect(gValue_.x(), vValue_ + gValue_.y(), rRect_.width(), rRect_.height());
+			rRect_ = QRect(gValue_.x(), gValue_.y(), rRect_.width(), rRect_.height());
 		}
 
 		typedef std::shared_ptr< __AbstractItemWidgetDelegate::ManagerType::EditorItem > IT_;
@@ -149,22 +178,17 @@ private:
 		for (const auto &i : manager.data) {
 
 			auto widget_ = i.second->widget;
-			if (0 == widget_) { continue; }
+			if (0 == widget_) {
+				qDebug() << "!! is null";
+				continue;
+			}
 			auto pWidget_ = widget_->parentWidget();
-			if (0 == pWidget_) { continue; }
-
-			/*
-			增加边界
-			为"setPos"之类的动画服务
-			此类动画幅度不要超过5
-			否则可能出现逻辑错误
-			*/
-			const auto && gValue_ = widget_->mapToGlobal(QPoint(-5, -5));
-			const auto && size_ = widget_->size() + QSize(10, 10);
-
-			if (
-				rRect_.intersects(QRect(gValue_, size_))
-				) {
+			if (0 == pWidget_) { 
+				qDebug() << "!! is null";
+				continue;
+			}
+			
+			if ( _isShowing(i.second->widget, rRect_) ) {
 				tmp_pool.push_back(i.second);
 			}
 			else {
@@ -179,6 +203,13 @@ private:
 	}
 
 };
+
+void AbstractItemWidgetDelegate::stopGC() {
+	*(thisp->isOnDestory) = true;
+}
+void AbstractItemWidgetDelegate::startGC() {
+	*(thisp->isOnDestory) = false;
+}
 
 /* 创建editor */
 QWidget * AbstractItemWidgetDelegate::createEditor(
