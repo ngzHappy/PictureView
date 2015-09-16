@@ -80,15 +80,17 @@ public:
 	bool isPainting = false;
 	bool isOpenCloseWidget = false;
 	std::shared_ptr< bool > isOnDestory;
-
+	bool isGCStarted = false;
 	ThisPrivate(AbstractItemWidgetDelegate * s) :super(s),
 		manager(s->getView()){
+		isGCStarted = true;
 		isOnDestory = std::shared_ptr<bool >(new bool(false));
 		startAGCEvent();
 	}
 
 	~ThisPrivate() {
 		*isOnDestory = true;
+		isGCStarted = false;
 	}
 	
 	/* gc evnet  */
@@ -218,6 +220,7 @@ private:
 	}
 	void _GCFunction() {
 		if (*isOnDestory) { return; }
+		if (false == isGCStarted) { return; }
 		/*
 		采用 停止复制法
 		采用全局坐标系
@@ -269,10 +272,10 @@ private:
 };
 
 void AbstractItemWidgetDelegate::stopGC() {
-	*(thisp->isOnDestory) = true;
+	(thisp->isGCStarted) = false;
 }
 void AbstractItemWidgetDelegate::startGC() {
-	*(thisp->isOnDestory) = false;
+	(thisp->isGCStarted) = true;
 }
 
 /* 创建editor */

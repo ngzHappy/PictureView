@@ -1,6 +1,7 @@
 ﻿#include "PictureDelegate.hpp"
 #include "PictureListView.hpp"
 #include "PictureModel.hpp"
+#include "ImageReaderObject.hpp"
 #include <QFileInfo>
 #include <QStandardPaths>
 #include <QDir>
@@ -12,8 +13,10 @@ public:
     PictureListView * super ;
     PictureModel * model ;
     AbstractItemWidgetDelegate * delegate ;
+	ImageReaderObject * imageReader;
     ThisPrivate(PictureListView * s):super(s){
 		super->thisp = this;
+		imageReader = new ImageReaderObject ;
         model = new PictureModel(super);
         delegate = new AbstractItemWidgetDelegate(
                     super,
@@ -29,7 +32,7 @@ public:
     }
 
     ~ThisPrivate(){
-
+		delete imageReader;
     }
 
     void initData(
@@ -47,6 +50,14 @@ public:
             ans.insert("jpg");
             ans.insert("png");
             ans.insert("bmp");
+			ans.insert("dds");
+			ans.insert("gif");
+			ans.insert("ico");
+			ans.insert("mng");
+			ans.insert("svg");
+			ans.insert("tga");
+			ans.insert("tiff");
+			ans.insert("ebp");
             return std::move(ans);
         }();
 
@@ -86,7 +97,27 @@ public:
 
 PictureListView::PictureListView( QWidget * p ):
 SuperType(p){
+	/* 加快布局 */
+	this->setUniformItemSizes(true);
+	/* 竖直滚动条一直显示 */
+	this->setVerticalScrollBarPolicy( Qt::ScrollBarAlwaysOn );
+	/* 水平滚动条永不显示 */
+	this->setHorizontalScrollBarPolicy( Qt::ScrollBarAlwaysOff );
+	/*  */
+	{
+		auto * vsb_ = this->verticalScrollBar();
+		vsb_->setStyleSheet(R"(QScrollBar:vertical {width: 16px;})");
+	}
+	/* 初始化私有数据 */
     thisp = new ThisPrivate(this);
+	/* 设置选择模式 */
+	this->setSelectionMode( QListView::SelectionMode::ExtendedSelection );
+}
+
+void PictureListView::currentChanged(const QModelIndex &current, const QModelIndex &previous) {
+	SuperType::currentChanged(current,previous);
+	QString fileNamePath_0_ = thisp->model->data( current,Qt::DisplayRole ).toString();
+	eval( QString("viewin:")+ fileNamePath_0_);
 }
 
 PictureListView::~PictureListView(){
@@ -95,9 +126,46 @@ PictureListView::~PictureListView(){
 
 void PictureListView::setPath(const QString & arg_path){
     thisp->setModel(arg_path);
+	/* 加快布局 */
+	this->setUniformItemSizes(true);
+}
+ImageReaderObject * PictureListView::getImageReader()const {
+	return thisp->imageReader;
 }
 
+void PictureListView::selectionChanged(
+        const QItemSelection &s_,
+        const QItemSelection &d_){
+    SuperType::selectionChanged(s_,d_);
+    {
+        QStringList ans_;
+        const auto && source_ = this->selectedIndexes();
+        auto * model__ = thisp->model ;
+        for(const auto & i:source_){
+           auto && tmp_ =
+                   model__->data(i,Qt::DisplayRole).toString();
+           ans_.push_back( std::move(tmp_) );
+        }
+        emit selectedChanged(ans_);
+    }
+}
 
+QModelIndex PictureListView::createIndex(int i)const {
+	
+	if (0 == thisp) { return QModelIndex(); }
+	if (0 == thisp->model) {return QModelIndex();}
+
+	if ( i<0 ) {
+		i += thisp->model->rowCount( QModelIndex() );
+	}
+
+	if (i<0) {
+		return QModelIndex();
+	}
+
+	return thisp->model->createIndex(i,0);
+
+}
 
 /*  */
 

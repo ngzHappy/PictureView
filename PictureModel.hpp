@@ -59,6 +59,9 @@ public:
     void setModel(const DataPoolType & );
     void clearModel();
 
+	/* 设置为公用函数 */
+	using QAbstractItemModel::createIndex;
+
 private:
     DataPoolType data_;
 };

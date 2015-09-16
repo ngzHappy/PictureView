@@ -19,7 +19,12 @@ SOURCES += main.cpp\
     PictureView.cpp \
     ExplorerLine.cpp \
     PictureModel.cpp \
-    PictureDelegate.cpp
+    PictureDelegate.cpp \
+    ImageReaderObject.cpp \
+    PictureButton.cpp \
+    PictureViewButton.cpp \
+    PictureSelectedView.cpp \
+    ExplorerNumLine.cpp
 
 #headers
 HEADERS  += \
@@ -32,7 +37,12 @@ HEADERS  += \
     PictureView.hpp \
     ExplorerLine.hpp \
     PictureModel.hpp \
-    PictureDelegate.hpp
+    PictureDelegate.hpp \
+    ImageReaderObject.hpp \
+    PictureButton.hpp \
+    PictureViewButton.hpp \
+    PictureSelectedView.hpp \
+    ExplorerNumLine.hpp
 
 INCLUDEPATH += $$PWD
 

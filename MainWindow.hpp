@@ -26,6 +26,10 @@ public slots:
     void setPath(const QString & arg_path);
     void setViewPicture(const QString & arg_picture);
     void updatePath();
+	void eval( const QString & );
+	void selectedChanged( const QStringList & );
+	void scrollTo(int);
+	
 };
 
 
