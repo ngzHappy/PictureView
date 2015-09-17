@@ -140,10 +140,17 @@ void PictureDelegate::paintEvent(QPaintEvent *) {
 	do{
 		/* 尝试绘制图片 */
 		if ( false == readedPictureMutex->try_lock_shared() ) { break; }
-		std::shared_lock< std::shared_timed_mutex > 
-			_lock_pixmap_( *readedPictureMutex , std::adopt_lock );
-		
-		const auto & readedPicture_ = *readedPicture;
+		QPixmap readedPicture_s_;
+		{
+			std::shared_lock< std::shared_timed_mutex >
+				_lock_pixmap_(*readedPictureMutex, std::adopt_lock);
+			/*
+			隐式数据共享
+			增加一份拷贝
+			*/
+			readedPicture_s_ = (*readedPicture);
+		}
+		const auto & readedPicture_ = readedPicture_s_;
 		if ( (readedPicture_.width() > 0) && (readedPicture_.height() > 0 ) ) {
 			/* 绘制图片 */
 			QPainter painter(this);
