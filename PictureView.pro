@@ -3,6 +3,10 @@ CONFIG   += c++14
 QT       += core gui
 QT       += widgets
 
+win32-msvc*{
+QMAKE_CXXFLAGS_EXCEPTIONS_ON = -EHa
+}
+
 TARGET = PictureView
 TEMPLATE = app
 
@@ -24,7 +28,8 @@ SOURCES += main.cpp\
     PictureButton.cpp \
     PictureViewButton.cpp \
     PictureSelectedView.cpp \
-    ExplorerNumLine.cpp
+    ExplorerNumLine.cpp \
+    PlayerNumLine.cpp
 
 #headers
 HEADERS  += \
@@ -42,7 +47,8 @@ HEADERS  += \
     PictureButton.hpp \
     PictureViewButton.hpp \
     PictureSelectedView.hpp \
-    ExplorerNumLine.hpp
+    ExplorerNumLine.hpp \
+    PlayerNumLine.hpp
 
 INCLUDEPATH += $$PWD
 

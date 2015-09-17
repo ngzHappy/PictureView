@@ -26,6 +26,7 @@ public:
 
 public slots:
     void setPath(const QString &);
+	
 signals:
 	void eval( const QString & );
     void selectedChanged(const QStringList &);

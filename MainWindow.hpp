@@ -29,7 +29,9 @@ public slots:
 	void eval( const QString & );
 	void selectedChanged( const QStringList & );
 	void scrollTo(int);
-	
+	void scrolltoNextPicture(int/* the value never use */);
+protected:
+	void keyPressEvent(QKeyEvent * e) override;
 };
 
 

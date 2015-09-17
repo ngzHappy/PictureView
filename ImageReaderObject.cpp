@@ -59,8 +59,8 @@ QSize bestSize( const QSize & source,const QSize & tar ){
 
 
 void ImageReaderObject::getAPicture(
-	const QSize & imageSize                             /* 读取图片的大小 */,
-	const QString & picturePath                         /* 读取图片的路径 */,
+	const QSize   imageSize                             /* 读取图片的大小 */,
+	const QString   picturePath                         /* 读取图片的路径 */,
 	Namespace::ImageReaderObject::SMutex onDestoryMutex /* 防止对象析构 */,
 	Namespace::ImageReaderObject::SBool onDestoryData   /* 查看对象是否已经析构 */,
 	PictureDelegate * pictureDelegate                   /* 回调对象 */,
@@ -81,7 +81,7 @@ void ImageReaderObject::getAPicture(
     iSize_= bestSize( imageSize,iSize_ );
     reader__.setScaledSize( iSize_ );
     QImage temp__ = reader__.read() ;
-    auto temp__ans = QPixmap::fromImage( temp__ );
+    auto temp__ans = QPixmap::fromImage( std::move(temp__) );
 	
 	{
 		std::unique_lock< std::shared_timed_mutex > _0set_( *ansMutex );

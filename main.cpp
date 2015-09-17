@@ -2,6 +2,7 @@
 #include <QApplication>
 #include <QTextCodec>
 #include <QImage>
+#include <QDebug>
 
 namespace {
 	void forceImagePluginLoader() {
@@ -24,8 +25,21 @@ namespace {
 	}
 }
 
-int main(int argc, char *argv[])
-{
+#ifdef _MSC_VER
+/* set /eha */
+//sigaction
+#include <Windows.h>
+void se_handle( unsigned int, struct _EXCEPTION_POINTERS* ) {
+	throw -12340;
+}
+#endif
+
+int main(int argc, char *argv[]) try{
+
+#ifdef _MSC_VER
+	_set_se_translator( &se_handle );
+#endif
+
     /* 更改此处代码,如果系统编码不是GBK */
     QTextCodec::setCodecForLocale( QTextCodec::codecForName("GBK") );
 
@@ -37,9 +51,12 @@ int main(int argc, char *argv[])
 
     MainWindow widget;
     widget.show();
-
+	
     return app.exec();
 	
+}catch (...) {
+	qDebug() << "there is some core bug!!";
+    return -9999;
 }
 
 /* 主文件结束 */

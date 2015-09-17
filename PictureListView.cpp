@@ -14,10 +14,11 @@ public:
     PictureModel * model ;
     AbstractItemWidgetDelegate * delegate ;
 	ImageReaderObject * imageReader;
+
     ThisPrivate(PictureListView * s):super(s){
 		super->thisp = this;
 		imageReader = new ImageReaderObject ;
-        model = new PictureModel(super);
+        model = new PictureModel(super)     ;
         delegate = new AbstractItemWidgetDelegate(
                     super,
                     [s]()->AbstractItemWidget*{
@@ -86,7 +87,8 @@ public:
 		
 		if (model) {
 			/* 立即删除model */
-			delete model ;
+			model->clearModel()  ;
+			model->deleteLater() ;
 		}
 		model = model_;
 
@@ -94,6 +96,7 @@ public:
 
 };
 
+ 
 
 PictureListView::PictureListView( QWidget * p ):
 SuperType(p){

@@ -1,14 +1,16 @@
 ﻿
 #include "PictureModel.hpp"
 #include <QSize>
-
+#include <QDebug>
 PictureModel::PictureModel( QObject *  p):
 SuperType(p){
 
 }
 
 PictureModel::~PictureModel(){
-
+#ifdef _DEBUG
+	qDebug() << "picture model deleted   ";
+#endif
 }
 
 void PictureModel::setModel(DataPoolType && d_){

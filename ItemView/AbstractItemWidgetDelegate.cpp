@@ -12,7 +12,10 @@
 #include <QAbstractItemView>
 #include <map>
 #include <memory>
+#include <thread>
+#include <chrono>
 #include <set>
+#include <fstream>
 
 namespace {
 	namespace __AbstractItemWidgetDelegate {
@@ -126,25 +129,28 @@ public:
 				);
 		});
 	}
-
-#ifdef _DEBUG
+	 
 	int gcDataSize = 0;
-#endif
-
+ 
 	void GCFunction() { 
-#ifdef _DEBUG
+
 		do {
 			int gcDataSizeAgo = gcDataSize;
 			gcDataSize = int(manager.data.size());
-			if ( gcDataSize == gcDataSizeAgo) {
-				break;
+			if ( (gcDataSize == gcDataSizeAgo)/* && (gcDataSize<20)*/ ) {
+				/* 避免过于频繁调度gc */
+				return;
 			}
+#ifdef _DEBUG
 			else {
-				qDebug() << "data size:" << gcDataSize;
+				if ((gcDataSize >= 20))	{
+					qDebug() << "data size:" << gcDataSize;
+				}
 			}
-		} while (0);
 #endif
-		_GCFunction();
+		} while (0);
+
+		return _GCFunction();
 	}
 private:
 	
@@ -183,7 +189,7 @@ private:
 			typedef std::reverse_iterator< IT__ > RIT__;
 
 			RIT__ begin_( allChildren_.end() );
-			RIT__ end_( allChildren_.begin() );
+			RIT__ end_(   allChildren_.begin() );
 
 			for (;begin_!=end_; ++begin_) {
 				const auto & i = *begin_;
@@ -202,6 +208,7 @@ private:
 		}
 		
 	}
+
 	bool _isShowing( const QWidget * widget__ ,const QRect  & rRect_ ) {
 		const auto * widget_ = qobject_cast<const AbstractItemWidget *>(widget__);
 		if (0 == widget_) { return false; }
@@ -218,9 +225,13 @@ private:
 		return rRect_.intersects( QRect(gValue_,size_) );
 
 	}
-	void _GCFunction() {
+
+	void _GCFunction() try {
+
 		if (*isOnDestory) { return; }
 		if (false == isGCStarted) { return; }
+		if (0 == super->view) { return; }
+
 		/*
 		采用 停止复制法
 		采用全局坐标系
@@ -228,6 +239,7 @@ private:
 		QRect rRect_;
 		{
 			auto * v__ = super->view->getWidgetItemView();
+			if (0 == v__) { return; }
 			rRect_ = v__->rect();
 			const auto && gValue_ = v__->mapToGlobal(QPoint(0, 0));
 			rRect_ = QRect(gValue_.x(), gValue_.y(), rRect_.width(), rRect_.height());
@@ -236,12 +248,18 @@ private:
 		typedef std::shared_ptr< __AbstractItemWidgetDelegate::ManagerType::EditorItem > IT_;
 		std::list<IT_> tmp_pool;
 		
-		for (const auto &i : manager.data) {
-			auto * p = i.second->widget->parentWidget();
-			if (p) { _updateChildrenWidget(p); break; }
+		for (const auto & i : manager.data) {
+			if (i.second) {
+				auto _0_widget_ = i.second->widget;
+				if (0 == _0_widget_) { continue; }
+				auto * p = _0_widget_->parentWidget();
+				if (p) { _updateChildrenWidget(p); break; }
+			}
 		}
 
 		for (const auto &i : manager.data) {
+
+			if (false == i.second) { continue; }
 
 			auto widget_ = i.second->widget;
 			if (0 == widget_) {
@@ -255,7 +273,7 @@ private:
 				continue;
 			}
 			
-			if ((childrenWidgets.count(widget_)>0)&&(_isShowing(widget_, rRect_)) ) {
+			if ( (childrenWidgets.count(widget_)>0) && (_isShowing(widget_, rRect_) ) ) {
 				tmp_pool.push_back(i.second);
 			}
 			else {
@@ -267,6 +285,24 @@ private:
 		for (const auto & i : tmp_pool) {
 			manager.data.insert({ i->index,i });
 		}
+
+		/* 清除无用信息 */
+		childrenWidgets.clear();
+
+	}catch (...) {
+		qDebug() 
+			<< "crashed !!"
+			<<__LINE__ 
+			<< __FILE__ 
+			<< __func__ ;
+		using namespace std::chrono_literals;
+		std::this_thread::sleep_for( 1ms );
+		std::ofstream ofs("picture_view_gc.txt");
+		ofs << "crashed !! "
+			<< __LINE__ <<" "
+			<< __FILE__ <<" "
+			<< __func__ <<std::endl ;
+		throw ;
 	}
 
 };

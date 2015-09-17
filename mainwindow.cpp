@@ -14,6 +14,7 @@
 #include "PictureView.hpp"
 #include "PictureSelectedView.hpp"
 #include "ExplorerNumLine.hpp"
+#include "PlayerNumLine.hpp"
 
 
 class MainWindow::ThisPrivate{
@@ -24,10 +25,13 @@ public:
     ExplorerLine * explorerLine ;
 	PictureSelectedView * pictureSelectedView;
     ExplorerNumLine * explorerNumLine;
+    PlayNumLine * playerNumLine ;
 
     ThisPrivate(MainWindow * p):super(p){
+
         p->setMinimumWidth(768);
         p->setMinimumHeight(256);
+
         pictureListView = new PictureListView ;
         auto * layout = new QHBoxLayout;
         p->setLayout(layout);
@@ -42,6 +46,7 @@ public:
             layout->addLayout(vlayout);
             explorerLine = new ExplorerLine;
             explorerNumLine = new ExplorerNumLine ;
+            playerNumLine = new PlayNumLine;
             {
                 explorerNumLine->setFixedWidth(80);
                 auto * layout_h_ = new QHBoxLayout;
@@ -49,6 +54,7 @@ public:
                 layout_h_->setSpacing(0);
                 layout_h_->addWidget(explorerLine);
                 layout_h_->addWidget(explorerNumLine);
+                layout_h_->addWidget(playerNumLine);
                 vlayout->addLayout(layout_h_);
             }
 
@@ -70,6 +76,7 @@ public:
         explorerLine->connect(
 			explorerLine, 
 			&ExplorerLine::returnPressed, [this](){
+			playerNumLine->stopPlay();
             auto path_ = explorerLine->text() ;
             super->setPath( path_ );
         });
@@ -77,6 +84,7 @@ public:
 		explorerNumLine->connect(
 			explorerNumLine,
 			&ExplorerNumLine::returnPressed, [this]() {
+			playerNumLine->stopPlay();
 			auto path_ = explorerNumLine->text();
 			super->scrollTo( path_.toInt() );
 		});
@@ -88,6 +96,11 @@ public:
 		pictureListView->connect(
 			pictureListView, &PictureListView::selectedChanged,
 			super, &MainWindow::selectedChanged);
+		
+		playerNumLine->connect(
+			playerNumLine,&PlayNumLine::start,
+			super,&MainWindow::scrolltoNextPicture
+			);
 
 		super->resize(768,768);
     }
@@ -116,12 +129,15 @@ public:
         updatePath();
     }
 
+	/* 更新大图 */
     void setViewPicture(const QString & arg_picture){
         picturePath = arg_picture;
 		pictureView->setPicture( arg_picture );
     }
 
+	/* 更新整个model */
     void updatePath(){
+		playerNumLine->stopPlay();
 		pictureListView->setPath( path );
     }
 
@@ -129,6 +145,17 @@ public:
 
 void MainWindow::scrollTo(int i ) {
 	thisp->scrollTo(i );
+}
+
+void MainWindow::scrolltoNextPicture(int/* the value never use */) {
+
+	auto cindex_ = thisp->pictureListView->currentIndex();
+	auto * model_ = thisp->pictureListView->model();
+	if (model_ == 0) { return; }
+	auto row_count_ = model_->rowCount( cindex_ ) -1;
+	if (cindex_.row() >= row_count_) { return; }
+	scrollTo( cindex_.row()+1 );
+
 }
 
 void MainWindow::selectedChanged(const QStringList & source_) {
@@ -188,6 +215,11 @@ void MainWindow::eval(const QString & command_) {
 	}
 	
 
+}
+
+void MainWindow::keyPressEvent(QKeyEvent * e) {
+	SuperType::keyPressEvent(e);
+	thisp->playerNumLine->stopPlay();
 }
 
 /* 文件结束 */

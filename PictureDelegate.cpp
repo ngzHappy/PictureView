@@ -284,7 +284,7 @@ void PictureDelegate::beforeWidgetDelete()  {
 	if (0 == objectManager) { return; }
 	std::unique_lock<std::mutex> __locker__(*onDestoryMutex_);
 	*onDestoryData_ = true;
-    delete objectManager;
+    delete objectManager  ;
     objectManager = 0;
 
 }
