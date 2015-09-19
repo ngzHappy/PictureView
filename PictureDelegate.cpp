@@ -282,11 +282,12 @@ void PictureDelegate::enterEvent(QEvent *)  {
 void PictureDelegate::beforeWidgetDelete()  {
 	
 	if (0 == objectManager) { return; }
+	delete objectManager;
+	objectManager = 0;
+	
 	std::unique_lock<std::mutex> __locker__(*onDestoryMutex_);
 	*onDestoryData_ = true;
-    delete objectManager  ;
-    objectManager = 0;
-
+    
 }
 
 void PictureDelegate::_initButtons() {

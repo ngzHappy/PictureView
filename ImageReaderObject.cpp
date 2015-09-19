@@ -2,10 +2,12 @@
 #include "ImageReaderObject.hpp"
 #include "PictureDelegate.hpp"
 #include <QImageReader>
+#include <thread>
 #include <QDebug> 
 
 ImageReaderObject::ImageReaderObject( ) :
 	QObject( nullptr ){
+	getAPictureCount.store( 0 );
     auto * thread__ = new ThisThread(this);
     this->moveToThread(thread__);
     thisThread = thread__;
@@ -14,6 +16,11 @@ ImageReaderObject::ImageReaderObject( ) :
 
 ImageReaderObject::~ImageReaderObject(){
     thisThread->exit(     );
+
+	/* 等待所有子线程退出 */
+	while (getAPictureCount.load()>0){
+	}
+
 	if (thisThread->wait(100)==false) {
 		/* 等待100ms用于退出 */
 		/* 失败则杀死线程 */
@@ -66,6 +73,57 @@ void ImageReaderObject::getAPicture(
 	PictureDelegate * pictureDelegate                   /* 回调对象 */,
 	Namespace::ImageReaderObject::SSMutex   ansMutex    /* 函数运行结果锁 */,
 	Namespace::ImageReaderObject::SPixmap ans           /* 函数运行结果 */
+	) {
+
+	{
+		/* 检查对象是否已经析构 */
+		std::unique_lock< std::mutex > _mutex__(*onDestoryMutex);
+		if (*onDestoryData) { return; }
+	}
+	
+	const static int thread_count_ = []() {
+		int ans = QThread::idealThreadCount();
+		if (ans > 0) { return ans; }
+		return 1;
+	}();
+
+	/* 产生线程队列 */
+	++getAPictureCount;
+	while ( getAPictureCount.load()>thread_count_){
+		/* 防止产生过多线程 */
+	}
+
+	std::thread read_thread([ this, imageSize, picturePath,
+		onDestoryMutex, onDestoryData, 
+		pictureDelegate, ansMutex,ans
+	]() {
+		class Loker_ {
+			ImageReaderObject * _this;
+		public:
+			Loker_(ImageReaderObject *v):_this(v) {}
+			~Loker_() { --(_this->getAPictureCount); }
+		};
+		Loker_ __(this);
+		{
+			/* 检查对象是否已经析构 */
+			std::unique_lock< std::mutex > _mutex__(*onDestoryMutex);
+			if (*onDestoryData) { return; }
+		}
+		this->_getAPicture( imageSize,
+			picturePath, onDestoryMutex, onDestoryData,
+			pictureDelegate, ansMutex, ans);
+	});
+	read_thread.detach();
+}
+
+void ImageReaderObject::_getAPicture(
+	const QSize   imageSize                             /* 读取图片的大小 */,
+	const QString   picturePath                         /* 读取图片的路径 */,
+	Namespace::ImageReaderObject::SMutex onDestoryMutex /* 防止对象析构 */,
+	Namespace::ImageReaderObject::SBool onDestoryData   /* 查看对象是否已经析构 */,
+	PictureDelegate * pictureDelegate                   /* 回调对象 */,
+	Namespace::ImageReaderObject::SSMutex   ansMutex    /* 函数运行结果锁 */,
+	Namespace::ImageReaderObject::SPixmap ans           /* 函数运行结果 */
         ){
 	
 	{
@@ -76,6 +134,7 @@ void ImageReaderObject::getAPicture(
 
 	if (imageSize.width() <= 0) { return; }
 	if (imageSize.height() <= 0) { return; }
+
     QImageReader reader__( picturePath );
     auto iSize_ = reader__.size();
     iSize_= bestSize( imageSize,iSize_ );
@@ -95,6 +154,7 @@ void ImageReaderObject::getAPicture(
 		/* 异步调用更新图片 */
 		pictureDelegate->update();
 	}
+
 }
 
 /*  */
