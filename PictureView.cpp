@@ -57,9 +57,10 @@ public:
 	QPixmap pixmap_;
 
     void setPicture(const QString &  image__ ){
-
+		/* 由于是主线程,也许不用创建独立拷贝 */
         const QPixmap pmap_ = QPixmap( image__ );
         pictureSize_ = pmap_.size() ;
+
         auto * it_ = new QGraphicsPixmapItem(pmap_);
         scene_->addItem(it_);
 
@@ -85,9 +86,9 @@ public:
 		scene_->setSceneRect( sr_ );
 		scene_->sceneRectChanged( sr_  );
 		
-		auto bsize_ = bestSize( size_ ,pictureSize_ );
+		const auto bsize_ = bestSize( size_ ,pictureSize_ );
 
-		auto tl= 
+		const auto tl= 
 			sr_.center() - QPointF( bsize_.width()/2,bsize_.height()/2 );
 
 		item_->setPixmap( 

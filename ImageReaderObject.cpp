@@ -4,6 +4,7 @@
 #include <QImageReader>
 #include <thread>
 #include <QDebug> 
+#include <QFile>
 
 ImageReaderObject::ImageReaderObject( ) :
 	QObject( nullptr ){
@@ -135,13 +136,26 @@ void ImageReaderObject::_getAPicture(
 	if (imageSize.width() <= 0) { return; }
 	if (imageSize.height() <= 0) { return; }
 
-    QImageReader reader__( picturePath );
+	QFile file__( picturePath );
+	if ( false == file__.open(QIODevice::ReadOnly) ) {
+		return;
+	}
+    QImageReader reader__( &file__ /*picturePath*/ );
     auto iSize_ = reader__.size();
     iSize_= bestSize( imageSize,iSize_ );
     reader__.setScaledSize( iSize_ );
     QImage temp__ = reader__.read() ;
-    auto temp__ans = QPixmap::fromImage( std::move(temp__) );
 	
+	/* 强制创建独立拷贝 */
+	temp__.detach();
+
+	/* 关闭文件 */
+	file__.close();
+
+	/* 强制创建独立拷贝 */
+    auto temp__ans = QPixmap::fromImage( std::move(temp__) );
+	temp__ans.detach();
+
 	{
 		std::unique_lock< std::shared_timed_mutex > _0set_( *ansMutex );
 		*ans =std::move( temp__ans );
