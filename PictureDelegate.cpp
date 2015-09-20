@@ -72,6 +72,7 @@ PictureDelegate::PictureDelegate(PictureListView *p):
 void PictureDelegate::setEditorData(
     const QModelIndex & index
     )   {
+
 	if (objectManager == 0) { return; }
 	this->setToolTip(stringData);
 
@@ -91,6 +92,7 @@ AbstractItemWidget * PictureDelegate::instance(
 	const QStyleOptionViewItem & option,
 	const QModelIndex & index
 	) {
+
 	if (objectManager == 0) { 
 		qDebug() << "core error!!";
 		return this;

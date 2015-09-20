@@ -40,8 +40,12 @@ int main(int argc, char *argv[]) try{
 	_set_se_translator( &se_handle );
 #endif
 
+#ifdef _WIN32
     /* 更改此处代码,如果系统编码不是GBK */
     QTextCodec::setCodecForLocale( QTextCodec::codecForName("GBK") );
+#else
+    QTextCodec::setCodecForLocale( QTextCodec::codecForName("UTF-8") );
+#endif
 
     /* 程序主循环 */
     QApplication app(argc, argv);
