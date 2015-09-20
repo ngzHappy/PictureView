@@ -25,7 +25,7 @@ PictureDelegate::PictureDelegate(PictureListView *p):
 
 	super = p;
 
-	readedPicture = std::shared_ptr<QPixmap>(new QPixmap);
+    readedPicture = std::shared_ptr<QImage>(new QImage);
 	onDestoryData_ = std::shared_ptr<bool>(new bool(false));
 	onDestoryMutex_ = std::shared_ptr<std::mutex>(new std::mutex);
 	readedPictureMutex = std::shared_ptr<std::shared_timed_mutex>( new std::shared_timed_mutex);
@@ -142,7 +142,7 @@ void PictureDelegate::paintEvent(QPaintEvent *) {
 	do{
 		/* 尝试绘制图片 */
 		if ( false == readedPictureMutex->try_lock_shared() ) { break; }
-		QPixmap readedPicture_s_;
+        QImage readedPicture_s_;
 		{
 			std::shared_lock< std::shared_timed_mutex >
 				_lock_pixmap_(*readedPictureMutex, std::adopt_lock);
@@ -163,7 +163,7 @@ void PictureDelegate::paintEvent(QPaintEvent *) {
 			x /= -2;
 			y /= -2;
 
-			painter.drawPixmap((x > 0 ? x : 0), (y > 0 ? y : 0), readedPicture_);
+            painter.drawImage((x > 0 ? x : 0), (y > 0 ? y : 0), readedPicture_);
 
 			if (false == isFirstPainted) {
 				/* 记录第一次绘制完成 */

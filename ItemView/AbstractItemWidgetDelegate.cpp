@@ -134,6 +134,7 @@ public:
  
 	void GCFunction() { 
 
+ 
 		do {
 			int gcDataSizeAgo = gcDataSize;
 			gcDataSize = int(manager.data.size());
@@ -148,7 +149,9 @@ public:
 				}
 			}
 #endif
+
 		} while (0);
+ 
 
 		return _GCFunction();
 	}

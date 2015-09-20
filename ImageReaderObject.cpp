@@ -8,7 +8,15 @@
 
 ImageReaderObject::ImageReaderObject( ) :
 	QObject( nullptr ){
-	getAPictureCount.store( 0 );
+
+    const static int thread_count_ = []() {
+        int ans = QThread::idealThreadCount();
+        if (ans > 0) { return ans; }
+        return 1;
+    }();
+    threadPool.setMaxThreadCount(thread_count_);
+
+
     auto * thread__ = new ThisThread(this);
     this->moveToThread(thread__);
     thisThread = thread__;
@@ -17,10 +25,8 @@ ImageReaderObject::ImageReaderObject( ) :
 
 ImageReaderObject::~ImageReaderObject(){
     thisThread->exit(     );
-
-	/* 等待所有子线程退出 */
-	while (getAPictureCount.load()>0){
-	}
+    threadPool.clear(     );
+    threadPool.waitForDone(100);
 
 	if (thisThread->wait(100)==false) {
 		/* 等待100ms用于退出 */
@@ -66,6 +72,85 @@ QSize bestSize( const QSize & source,const QSize & tar ){
 }
 
 
+namespace  {
+class Runnable :public QRunnable {
+public:
+    const QSize   imageSize                              /* 读取图片的大小 */;
+    const QString   picturePath                          /* 读取图片的路径 */;
+    Namespace::ImageReaderObject::SMutex onDestoryMutex  /* 防止对象析构 */;
+    Namespace::ImageReaderObject::SBool onDestoryData    /* 查看对象是否已经析构 */;
+    PictureDelegate * pictureDelegate                    /* 回调对象 */;
+    Namespace::ImageReaderObject::SSMutex   ansMutex     /* 函数运行结果锁 */;
+    Namespace::ImageReaderObject::SPixmap ans            /* 函数运行结果 */;
+
+    Runnable(const QSize   imageSize_                             /* 读取图片的大小 */,
+             const QString   picturePath_                         /* 读取图片的路径 */,
+             Namespace::ImageReaderObject::SMutex onDestoryMutex_ /* 防止对象析构 */,
+             Namespace::ImageReaderObject::SBool onDestoryData_   /* 查看对象是否已经析构 */,
+             PictureDelegate * pictureDelegate_                   /* 回调对象 */,
+             Namespace::ImageReaderObject::SSMutex   ansMutex_    /* 函数运行结果锁 */,
+             Namespace::ImageReaderObject::SPixmap ans_           /* 函数运行结果 */)
+    :imageSize (imageSize_),
+      picturePath (picturePath_),
+      onDestoryMutex (onDestoryMutex_),
+      onDestoryData (onDestoryData_),
+      pictureDelegate (pictureDelegate_),
+      ansMutex (ansMutex_),
+      ans (ans_)
+    {
+
+    }
+
+    virtual void run() override{
+
+        {
+            /* 检查对象是否已经析构 */
+            std::unique_lock< std::mutex > _mutex__(*onDestoryMutex);
+            if (*onDestoryData) { return; }
+        }
+
+        if (imageSize.width() <= 0) { return; }
+        if (imageSize.height() <= 0) { return; }
+
+        QFile file__( picturePath );
+        if ( false == file__.open(QIODevice::ReadOnly) ) {
+            return;
+        }
+
+        QImageReader reader__( &file__ /*picturePath*/ );
+        auto iSize_ = reader__.size();
+        iSize_= bestSize( imageSize,iSize_ );
+        reader__.setScaledSize( iSize_ );
+        QImage temp__ = reader__.read() ;
+
+        /* 强制创建独立拷贝 */
+        temp__.detach();
+
+        /* 关闭文件 */
+        file__.close();
+
+        /* 强制创建独立拷贝 */
+        auto temp__ans =  std::move(temp__) ;
+        temp__ans.detach();
+
+        {
+            std::unique_lock< std::shared_timed_mutex > _0set_( *ansMutex );
+            *ans =std::move( temp__ans );
+        }
+
+        {
+            /* 检查对象是否已经析构 */
+            std::unique_lock< std::mutex > _mutex__(*onDestoryMutex);
+            if (*onDestoryData) { return; }
+            /* 异步调用更新图片 */
+            pictureDelegate->update();
+        }
+
+    }
+
+};
+}
+
 void ImageReaderObject::getAPicture(
 	const QSize   imageSize                             /* 读取图片的大小 */,
 	const QString   picturePath                         /* 读取图片的路径 */,
@@ -81,94 +166,20 @@ void ImageReaderObject::getAPicture(
 		std::unique_lock< std::mutex > _mutex__(*onDestoryMutex);
 		if (*onDestoryData) { return; }
 	}
-	
-	const static int thread_count_ = []() {
-		int ans = QThread::idealThreadCount();
-		if (ans > 0) { return ans; }
-		return 1;
-	}();
+	   
+    Runnable * run_ = new Runnable(
+                imageSize,
+                picturePath,
+                onDestoryMutex,
+                onDestoryData,
+                pictureDelegate ,
+                ansMutex,
+                ans
+                );
 
-	/* 产生线程队列 */
-	++getAPictureCount;
-	while ( getAPictureCount.load()>thread_count_){
-		/* 防止产生过多线程 */
-	}
-
-	std::thread read_thread([ this, imageSize, picturePath,
-		onDestoryMutex, onDestoryData, 
-		pictureDelegate, ansMutex,ans
-	]() {
-		class Loker_ {
-			ImageReaderObject * _this;
-		public:
-			Loker_(ImageReaderObject *v):_this(v) {}
-			~Loker_() { --(_this->getAPictureCount); }
-		};
-		Loker_ __(this);
-		{
-			/* 检查对象是否已经析构 */
-			std::unique_lock< std::mutex > _mutex__(*onDestoryMutex);
-			if (*onDestoryData) { return; }
-		}
-		this->_getAPicture( imageSize,
-			picturePath, onDestoryMutex, onDestoryData,
-			pictureDelegate, ansMutex, ans);
-	});
-	read_thread.detach();
-}
-
-void ImageReaderObject::_getAPicture(
-	const QSize   imageSize                             /* 读取图片的大小 */,
-	const QString   picturePath                         /* 读取图片的路径 */,
-	Namespace::ImageReaderObject::SMutex onDestoryMutex /* 防止对象析构 */,
-	Namespace::ImageReaderObject::SBool onDestoryData   /* 查看对象是否已经析构 */,
-	PictureDelegate * pictureDelegate                   /* 回调对象 */,
-	Namespace::ImageReaderObject::SSMutex   ansMutex    /* 函数运行结果锁 */,
-	Namespace::ImageReaderObject::SPixmap ans           /* 函数运行结果 */
-        ){
-	
-	{
-		/* 检查对象是否已经析构 */
-		std::unique_lock< std::mutex > _mutex__(*onDestoryMutex);
-		if (*onDestoryData) { return; }
-	}
-
-	if (imageSize.width() <= 0) { return; }
-	if (imageSize.height() <= 0) { return; }
-
-	QFile file__( picturePath );
-	if ( false == file__.open(QIODevice::ReadOnly) ) {
-		return;
-	}
-    QImageReader reader__( &file__ /*picturePath*/ );
-    auto iSize_ = reader__.size();
-    iSize_= bestSize( imageSize,iSize_ );
-    reader__.setScaledSize( iSize_ );
-    QImage temp__ = reader__.read() ;
-	
-	/* 强制创建独立拷贝 */
-	temp__.detach();
-
-	/* 关闭文件 */
-	file__.close();
-
-	/* 强制创建独立拷贝 */
-    auto temp__ans = QPixmap::fromImage( std::move(temp__) );
-	temp__ans.detach();
-
-	{
-		std::unique_lock< std::shared_timed_mutex > _0set_( *ansMutex );
-		*ans =std::move( temp__ans );
-	}
-	
-	{
-		/* 检查对象是否已经析构 */
-		std::unique_lock< std::mutex > _mutex__(*onDestoryMutex);
-		if (*onDestoryData) { return; }
-		/* 异步调用更新图片 */
-		pictureDelegate->update();
-	}
+     threadPool.start( run_ );
 
 }
+
 
 /*  */

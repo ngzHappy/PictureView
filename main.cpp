@@ -28,16 +28,16 @@ namespace {
 #ifdef _MSC_VER
 /* set /eha */
 //sigaction
-#include <Windows.h>
-void se_handle( unsigned int, struct _EXCEPTION_POINTERS* ) {
-	throw -12340;
-}
+//#include <Windows.h>
+//void se_handle( unsigned int, struct _EXCEPTION_POINTERS* ) {
+//	throw -12340;
+//}
 #endif
 
 int main(int argc, char *argv[]) try{
 
 #ifdef _MSC_VER
-	_set_se_translator( &se_handle );
+//	_set_se_translator( &se_handle );
 #endif
 
 #ifdef _WIN32

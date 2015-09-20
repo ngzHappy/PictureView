@@ -32,6 +32,7 @@ public slots:
 	void scrolltoNextPicture(int/* the value never use */);
 protected:
 	void keyPressEvent(QKeyEvent * e) override;
+    void paintEvent(QPaintEvent * e) override ;
 };
 
 

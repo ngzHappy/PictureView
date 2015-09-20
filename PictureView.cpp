@@ -3,6 +3,9 @@
 #include <QGraphicsPixmapItem>
 #include <QResizeEvent>
 #include <QDebug>
+#include <thread>
+#include <atomic>
+#include <QApplication>
 
 namespace  {
 QSize bestSize( const QSize & source,const QSize & tar ){
@@ -54,28 +57,67 @@ public:
     QGraphicsPixmapItem * item_ = 0;
     QGraphicsScene * scene_ = 0;
     QSize pictureSize_ ;
-	QPixmap pixmap_;
+    QImage pixmap_;
+    bool setPictureIng =false ;
 
-    void setPicture(const QString &  image__ ){
-		/* 由于是主线程,也许不用创建独立拷贝 */
-        const QPixmap pmap_ = QPixmap( image__ );
-        pictureSize_ = pmap_.size() ;
+    void setPicture(const QString  image__ ){
 
-        auto * it_ = new QGraphicsPixmapItem(pmap_);
-        scene_->addItem(it_);
-
-        if(item_){
-            scene_->removeItem( item_ );
-            delete item_;
+        if(setPictureIng){
+            return ;
         }
 
-        item_ = it_;
-		pixmap_ = pmap_;
+        class Locker__{
+            bool * b_;
+        public:
+            Locker__(bool * _b):b_(_b){*b_=true;}
+            ~Locker__(){*b_=false ;}
+        };
+
+        {
+            Locker__ _1_(&(setPictureIng));
+
+            /* 创建独立拷贝 */
+            QImage pmap_  ;
+            std::atomic<bool> isLoaded(false);
+            auto image_read_function = [ image__ ](
+                    std::atomic<bool> * isLoaded_,
+                    QImage * image_
+                    ){
+                *image_ = QImage(image__);
+                *isLoaded_ = true ;
+            };
+
+            std::thread thread_( image_read_function,&isLoaded,&pmap_ );
+            thread_.detach();
+
+            while( isLoaded.load()==false ){
+                QApplication::processEvents();
+            }
+            pmap_.detach() ;
+
+            pictureSize_ = pmap_.size() ;
+
+            auto * it_ = new QGraphicsPixmapItem ;
+            scene_->addItem(it_);
+
+            if(item_){
+                scene_->removeItem( item_ );
+                delete item_;
+            }
+
+            item_ = it_;
+            pixmap_ = pmap_;
+
+        }
         fitToSize( super->size() );
 
     }
 
     void fitToSize(const QSize & size_){
+
+        if(setPictureIng){
+            return ;
+        }
 
         if(0==item_){return ;}
         if(size_.width()<=0){return ;}
@@ -92,11 +134,13 @@ public:
 			sr_.center() - QPointF( bsize_.width()/2,bsize_.height()/2 );
 
 		item_->setPixmap( 
+                    QPixmap::fromImage(
 			pixmap_.scaled(
 				bsize_,
 				Qt::IgnoreAspectRatio,
 				Qt::SmoothTransformation
 				)
+                        )
 			);
 		item_->setPos( tl );
 		

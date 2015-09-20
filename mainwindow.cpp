@@ -222,5 +222,9 @@ void MainWindow::keyPressEvent(QKeyEvent * e) {
 	thisp->playerNumLine->stopPlay();
 }
 
+void MainWindow::paintEvent(QPaintEvent * e){
+    return QWidget::paintEvent(e);
+}
+
 /* 文件结束 */
 

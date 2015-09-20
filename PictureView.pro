@@ -7,6 +7,8 @@ win32-msvc*{
 QMAKE_CXXFLAGS_EXCEPTIONS_ON = -EHa
 }
 
+QMAKE_CXXFLAGS += -g
+
 TARGET = PictureView
 TEMPLATE = app
 

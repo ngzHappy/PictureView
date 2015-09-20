@@ -13,16 +13,18 @@
 #include <QImage>
 #include <QPixmap>
 #include <QMetaType>
-#include <atomic>
 #include <mutex>
 #include <shared_mutex>
+#include <QRunnable>
+#include <QThreadPool>
+
 class PictureDelegate;
 
 namespace Namespace{
 	namespace ImageReaderObject {
 
 		typedef std::shared_ptr< bool > SBoolBase;
-		typedef std::shared_ptr< QPixmap > SPixmapBase;
+        typedef std::shared_ptr< QImage > SPixmapBase;
 		typedef std::shared_ptr< std::mutex > SMutexBase;
 		typedef std::shared_ptr< std::shared_timed_mutex > SSMutexBase;
 
@@ -85,16 +87,8 @@ public slots:
 		    Namespace::ImageReaderObject::SPixmap ans           /* 函数运行结果 */
             );
 private:
-	std::atomic<int> getAPictureCount;
-	void _getAPicture(
-		const QSize   imageSize                             /* 读取图片的大小 */,
-		const QString   picturePath                         /* 读取图片的路径 */,
-		Namespace::ImageReaderObject::SMutex onDestoryMutex /* 防止对象析构 */,
-		Namespace::ImageReaderObject::SBool onDestoryData   /* 查看对象是否已经析构 */,
-		PictureDelegate * pictureDelegate                   /* 回调对象 */,
-		Namespace::ImageReaderObject::SSMutex ansMutex      /* 函数返回值锁 */,
-		Namespace::ImageReaderObject::SPixmap ans           /* 函数运行结果 */
-		);
+
+    QThreadPool threadPool ;
 };
 
 #endif
