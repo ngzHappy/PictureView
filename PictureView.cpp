@@ -107,6 +107,7 @@ public:
             if(item_){
                 scene_->removeItem( item_ );
                 delete item_;
+                item_=0;
             }
 
             item_ = it_;
@@ -177,7 +178,7 @@ SuperType(p){
 }
 
 PictureView::~PictureView(){
-    delete thisp ;
+    delete thisp ;thisp=0;
 }
 
 

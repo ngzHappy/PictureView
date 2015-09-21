@@ -34,6 +34,7 @@ public:
 
     ~ThisPrivate(){
 		delete imageReader;
+        imageReader =0;
     }
 
     void initData(
@@ -89,6 +90,7 @@ public:
 			/* 立即删除model */
 			model->clearModel()  ;
 			model->deleteLater() ;
+            model=0;
 		}
 		model = model_;
 

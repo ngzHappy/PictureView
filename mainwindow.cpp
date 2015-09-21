@@ -191,7 +191,7 @@ MainWindow::MainWindow(QWidget * p):SuperType(p){
 
 
 MainWindow::~MainWindow(){
-    delete thisp;
+    delete thisp;thisp=0;
 }
 
 void MainWindow::setPath(const QString & arg_path){

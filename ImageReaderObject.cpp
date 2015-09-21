@@ -2,6 +2,7 @@
 #include "ImageReaderObject.hpp"
 #include "PictureDelegate.hpp"
 #include <QImageReader>
+#include <QApplication>
 #include <thread>
 #include <QDebug> 
 #include <QFile>
@@ -143,7 +144,7 @@ public:
             std::unique_lock< std::mutex > _mutex__(*onDestoryMutex);
             if ( *onDestoryData ) { return; }
             /* 异步调用更新图片 */
-            pictureDelegate->update();
+            QApplication::postEvent(pictureDelegate,new PictureDelegateUpdateEvent);
         }
 
     }

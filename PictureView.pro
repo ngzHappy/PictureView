@@ -58,3 +58,10 @@ MOC_DIR = $$PWD/moc
 
 DISTFILES += \
     qwidgetbackingstore.zip
+
+
+unix {
+    QMAKE_LFLAGS += -Wl,-rpath .
+}
+
+

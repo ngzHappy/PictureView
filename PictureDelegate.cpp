@@ -300,4 +300,13 @@ void PictureDelegate::_initButtons() {
 
 }
 
+bool PictureDelegate::event(QEvent * e){
+
+    if( dynamic_cast<PictureDelegateUpdateEvent *>(e) ){
+        this->update();
+    }
+    return SuperType::event(e);
+
+}
+
 /*  */

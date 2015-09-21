@@ -5,7 +5,7 @@
 /*
  * 此文件应当为私有文件
 */
-
+#include <QEvent>
 #include <ItemView/AbstractItemWidget.hpp>
 #include <QApplication>
 #include <QStringListModel>
@@ -22,6 +22,18 @@ class PictureListView;
 #include "PictureButton.hpp"
 #include <array>
  
+class PictureDelegateUpdateEvent :public QEvent  {
+public:
+
+    PictureDelegateUpdateEvent():
+        QEvent( QEvent::Type(QEvent::MaxUser) ){
+
+    }
+    virtual ~PictureDelegateUpdateEvent(){
+
+    }
+
+};
 
 class PictureDelegate :
 	public  AbstractItemWidget{
@@ -85,6 +97,8 @@ private:
 	void _initButtons();
 private:
 	void _mouse_enter();
+protected:
+    bool event(QEvent * ) override;
 };
 
 
