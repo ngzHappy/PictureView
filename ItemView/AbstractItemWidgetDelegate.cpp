@@ -10,6 +10,7 @@
 #include <QDebug>
 #include <QScrollBar>
 #include <QAbstractItemView>
+#include <QTimer>
 #include <map>
 #include <memory>
 #include <thread>
@@ -251,7 +252,9 @@ private:
 		typedef std::shared_ptr< __AbstractItemWidgetDelegate::ManagerType::EditorItem > IT_;
 		std::list<IT_> tmp_pool;
 		
-		for (const auto & i : manager.data) {
+		/* 避免出现乱七八糟的问你 */
+		auto manager_data = std::move( manager.data );
+		for (const auto & i : manager_data ) {
 			if (i.second) {
 				auto _0_widget_ = i.second->widget;
 				if (0 == _0_widget_) { continue; }
@@ -488,6 +491,24 @@ void AbstractItemWidgetDelegate::updateEditorGeometry(
 			}
 		}
 		QStyledItemDelegate::updateEditorGeometry(editor,option, index);
+}
+
+void 
+AbstractItemWidgetDelegate::destroyEditor(
+	QWidget * editor, 
+	const QModelIndex & i) const {
+	(void) i;
+	//QStyledItemDelegate::destroyEditor( editor, i);
+	/* 直接删除  */
+	auto * editor_ = qobject_cast< AbstractItemWidget * >(editor);
+	if (editor_) {
+		editor_->hide();
+		editor_->beforeWidgetDelete();
+		editor_->deleteLater();
+	}
+	else {
+		editor->deleteLater();
+	}
 }
 
 /**/

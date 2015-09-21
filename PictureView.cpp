@@ -83,18 +83,22 @@ public:
                     std::atomic<bool> * isLoaded_,
                     QImage * image_
                     ){
-                *image_ = QImage(image__);
-                *isLoaded_ = true ;
+				isLoaded_->store( false );
+                *image_ = std::move( QImage(image__) );
+				image_->detach();
+                isLoaded_->store( true );
             };
 
             std::thread thread_( image_read_function,&isLoaded,&pmap_ );
-            thread_.detach();
-
+            
             while( isLoaded.load()==false ){
                 QApplication::processEvents();
             }
-            pmap_.detach() ;
 
+			if (thread_.joinable()) {
+				thread_.join();
+			}
+          
             pictureSize_ = pmap_.size() ;
 
             auto * it_ = new QGraphicsPixmapItem ;
@@ -106,7 +110,7 @@ public:
             }
 
             item_ = it_;
-            pixmap_ = pmap_;
+            pixmap_ = std::move( pmap_ );
 
         }
         fitToSize( super->size() );
@@ -118,6 +122,14 @@ public:
         if(setPictureIng){
             return ;
         }
+
+		class Locker__ {
+			bool * b_;
+		public:
+			Locker__(bool * _b) :b_(_b) { *b_ = true; }
+			~Locker__() { *b_ = false; }
+		};
+		Locker__ _1_(&(setPictureIng));
 
         if(0==item_){return ;}
         if(size_.width()<=0){return ;}
@@ -153,7 +165,7 @@ void PictureView::resizeEvent(QResizeEvent *event){
     thisp->fitToSize( event->size() );
 }
 
-void PictureView::setPicture(const QString &  v) {
+void PictureView::setPicture(const QString   v) {
     thisp->setPicture(v);
 }
 

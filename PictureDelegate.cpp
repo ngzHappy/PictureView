@@ -13,8 +13,8 @@ PictureDelegate::~PictureDelegate(){
 	beforeWidgetDelete();
 }
 
-PictureDelegate::PictureDelegate(PictureListView *p):
-    SuperType( (QWidget *)(p) ){
+PictureDelegate::PictureDelegate(PictureListView * p):
+    SuperType(  ){
 
 	objectManager = new QObject;
 
@@ -284,12 +284,13 @@ void PictureDelegate::enterEvent(QEvent *)  {
 void PictureDelegate::beforeWidgetDelete()  {
 	
 	if (0 == objectManager) { return; }
-	delete objectManager;
+	auto * objM = objectManager;
 	objectManager = 0;
-	
-	std::unique_lock<std::mutex> __locker__(*onDestoryMutex_);
+	delete objM;
+
+	std::unique_lock<std::mutex> __locker__( *onDestoryMutex_ );
 	*onDestoryData_ = true;
-    
+   
 }
 
 void PictureDelegate::_initButtons() {

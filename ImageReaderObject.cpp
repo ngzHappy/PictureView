@@ -141,7 +141,7 @@ public:
         {
             /* 检查对象是否已经析构 */
             std::unique_lock< std::mutex > _mutex__(*onDestoryMutex);
-            if (*onDestoryData) { return; }
+            if ( *onDestoryData ) { return; }
             /* 异步调用更新图片 */
             pictureDelegate->update();
         }

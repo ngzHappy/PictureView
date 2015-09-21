@@ -5,16 +5,24 @@
 #include <QWidget>
 #include <QRect>
 #include <QStyleOptionViewItem>
+#include <set>
 
 class AbstractItemWidget :
         public QWidget {
     Q_OBJECT
+protected:
+	static std::set< AbstractItemWidget * > allThisWidgets;
 public:
     /* 构造函数 */
-    explicit AbstractItemWidget( QWidget * p  ):QWidget(p){}
-    AbstractItemWidget() :AbstractItemWidget(nullptr) {}
+    //explicit AbstractItemWidget( QWidget * p  ):QWidget(p){}
+	/* set parent in instance */
+    AbstractItemWidget() : QWidget( nullptr ) {
+	}
+
     /* 析构函数 */
-    virtual ~AbstractItemWidget(){}
+    virtual ~AbstractItemWidget(){
+	}
+
 protected:
     /* 记录item真实位置及大小,用于支持动画 */
     QRect finalRect_;

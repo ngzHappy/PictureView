@@ -23,7 +23,7 @@ class PictureDelegate;
 namespace Namespace{
 	namespace ImageReaderObject {
 
-		typedef std::shared_ptr< bool > SBoolBase;
+		typedef std::shared_ptr< volatile bool > SBoolBase;
         typedef std::shared_ptr< QImage > SPixmapBase;
 		typedef std::shared_ptr< std::mutex > SMutexBase;
 		typedef std::shared_ptr< std::shared_timed_mutex > SSMutexBase;

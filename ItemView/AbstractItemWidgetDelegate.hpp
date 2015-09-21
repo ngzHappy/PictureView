@@ -74,7 +74,7 @@ public:
     virtual void closeAllWidgetItem();
 protected:
 	bool event(QEvent * e) override;
-
+	virtual void destroyEditor(QWidget * editor, const QModelIndex &) const override;
 private:
 	class ThisPrivate;
 	friend class ThisPrivate;

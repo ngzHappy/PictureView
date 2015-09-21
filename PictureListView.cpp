@@ -21,8 +21,8 @@ public:
         model = new PictureModel(super)     ;
         delegate = new AbstractItemWidgetDelegate(
                     super,
-                    [s]()->AbstractItemWidget*{
-                        return new PictureDelegate(s) ;
+                    [ s ]()->AbstractItemWidget*{
+                        return new PictureDelegate(s )  ;
                     },
                     super
                     );
