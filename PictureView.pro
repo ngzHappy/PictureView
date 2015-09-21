@@ -3,11 +3,11 @@ CONFIG   += c++14
 QT       += core gui
 QT       += widgets
 
-win32-msvc*{
-QMAKE_CXXFLAGS_EXCEPTIONS_ON = -EHa
-}
+#win32-msvc*{
+#QMAKE_CXXFLAGS_EXCEPTIONS_ON = -EHa
+#}
 
-QMAKE_CXXFLAGS += -g
+#QMAKE_CXXFLAGS += -g
 
 TARGET = PictureView
 TEMPLATE = app
@@ -55,3 +55,6 @@ HEADERS  += \
 INCLUDEPATH += $$PWD
 
 MOC_DIR = $$PWD/moc
+
+DISTFILES += \
+    qwidgetbackingstore.zip
