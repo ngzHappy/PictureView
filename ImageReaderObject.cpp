@@ -25,11 +25,17 @@ ImageReaderObject::ImageReaderObject( ) :
 }
 
 ImageReaderObject::~ImageReaderObject(){
+
     thisThread->exit(     );
     threadPool.clear(     );
     threadPool.waitForDone(100);
 
+		qDebug() << "movie count:" << PictureDelegateMovie::count();
+
 	if (thisThread->wait(100)==false) {
+
+		qDebug() << "movie count:" <<PictureDelegateMovie::count() ;
+
 		/* 等待100ms用于退出 */
 		/* 失败则杀死线程 */
 		thisThread->terminate();
@@ -182,5 +188,59 @@ void ImageReaderObject::getAPicture(
 
 }
 
+ 
+void ImageReaderObject::getAMovie(
+	const QSize   imageSize                             /* 读取图片的大小 */,
+	const QString   picturePath                         /* 读取图片的路径 */,
+	Namespace::ImageReaderObject::SMutex onDestoryMutex /* 防止对象析构 */,
+	Namespace::ImageReaderObject::SBool onDestoryData   /* 查看对象是否已经析构 */,
+	PictureDelegate * pictureDelegate                   /* 回调对象 */ 
+	) {
+		 
+	{
+			/* 检查对象是否已经析构 */
+			std::unique_lock< std::mutex > _mutex__(*onDestoryMutex);
+			if (*onDestoryData) { return; }
+	}
+	
+		std::shared_ptr<PictureDelegateMovie> _ans(
+			new PictureDelegateMovie(
+				picturePath,
+				onDestoryMutex,
+				onDestoryData
+				)
+			);
+
+		_ans->instance();
+
+		if (_ans->isValid()) {
+			auto iSize_ = _ans->frameRect().size();
+			auto best_size = bestSize(imageSize, iSize_);
+			_ans->setScaledSize(  best_size );
+		}
+		else {
+			_ans->movie = std::shared_ptr<PictureDelegateMovie>();
+			return;
+		}
+		
+
+		{
+			/* 检查对象是否已经析构 */
+			std::unique_lock< std::mutex > _mutex__(*onDestoryMutex);
+			if (*onDestoryData) { 
+				_ans->movie = std::shared_ptr<PictureDelegateMovie>();
+				return;
+			}
+		 
+			/* 更新获得的图片 */
+			_ans->connect(
+				_ans.get(), &PictureDelegateMovie::updateFrame,
+				pictureDelegate, &PictureDelegate::updateFrame,
+				Qt::QueuedConnection
+				);
+			 
+		}
+				 
+}
 
 /*  */

@@ -18,6 +18,7 @@
 #include <QRunnable>
 #include <QThreadPool>
 
+class PictureDelegateMovie;
 class PictureDelegate;
 
 namespace Namespace{
@@ -86,6 +87,15 @@ public slots:
 			Namespace::ImageReaderObject::SSMutex ansMutex      /* 函数返回值锁 */,
 		    Namespace::ImageReaderObject::SPixmap ans           /* 函数运行结果 */
             );
+
+	void getAMovie(
+		const QSize   imageSize                             /* 读取图片的大小 */,
+		const QString   picturePath                         /* 读取图片的路径 */,
+		Namespace::ImageReaderObject::SMutex onDestoryMutex /* 防止对象析构 */,
+		Namespace::ImageReaderObject::SBool onDestoryData   /* 查看对象是否已经析构 */,
+		PictureDelegate * pictureDelegate                   /* 回调对象 */ 
+		);
+
 private:
 
     QThreadPool threadPool ;

@@ -43,8 +43,10 @@ QVariant PictureModel::data(
     if(row_ >= rowCount(index) ){ return QVariant(); }
     const PictureModelItemData & id_ = data_[row_];
     switch (role) {
-		case Qt::DisplayRole : return id_.filePath ;
-		case Qt::SizeHintRole:return QSize(32,32);
+		case Qt::DisplayRole : return id_.filePath            ;
+		case Qt::SizeHintRole: return QSize(32,32)            ;
+		case Suffix_Role: return id_.suffix                   ;
+		case CompleteBaseName_Role:return id_.completeBaseName;
     }
     return QVariant() ;
 }

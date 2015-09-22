@@ -17,6 +17,7 @@ public:
 
     ThisPrivate(PictureListView * s):super(s){
 		super->thisp = this;
+
 		imageReader = new ImageReaderObject ;
         model = new PictureModel(super)     ;
         delegate = new AbstractItemWidgetDelegate(
@@ -33,8 +34,18 @@ public:
     }
 
     ~ThisPrivate(){
+
+		/* 隐藏主窗口 */
+		super->hide() ;
+
+		/* 删除所有widgets */
+		auto * layout_ = super->layout();
+		delete layout_ ;
+
+		/* 删除 image reader */
 		delete imageReader;
         imageReader =0;
+
     }
 
     void initData(
@@ -70,7 +81,9 @@ public:
             auto && suffix = i.suffix().trimmed().toLower() ;
             if(pictureTypes.count(suffix)<=0){continue;}
             DT_ item_ ;
-            item_.filePath = i.absoluteFilePath();
+			item_.suffix = suffix                        ;
+            item_.filePath = i.absoluteFilePath()        ;
+			item_.completeBaseName = i.completeBaseName();
             dataPool.push_back(item_);
         }
 

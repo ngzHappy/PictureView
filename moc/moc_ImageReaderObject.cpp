@@ -19,8 +19,8 @@
 
 QT_BEGIN_MOC_NAMESPACE
 struct qt_meta_stringdata_ImageReaderObject_t {
-    QByteArrayData data[15];
-    char stringdata0[277];
+    QByteArrayData data[16];
+    char stringdata0[287];
 };
 #define QT_MOC_LITERAL(idx, ofs, len) \
     Q_STATIC_BYTE_ARRAY_DATA_HEADER_INITIALIZER_WITH_OFFSET(len, \
@@ -43,7 +43,8 @@ QT_MOC_LITERAL(10, 172, 15), // "pictureDelegate"
 QT_MOC_LITERAL(11, 188, 37), // "Namespace::ImageReaderObject:..."
 QT_MOC_LITERAL(12, 226, 8), // "ansMutex"
 QT_MOC_LITERAL(13, 235, 37), // "Namespace::ImageReaderObject:..."
-QT_MOC_LITERAL(14, 273, 3) // "ans"
+QT_MOC_LITERAL(14, 273, 3), // "ans"
+QT_MOC_LITERAL(15, 277, 9) // "getAMovie"
 
     },
     "ImageReaderObject\0getAPicture\0\0imageSize\0"
@@ -52,7 +53,7 @@ QT_MOC_LITERAL(14, 273, 3) // "ans"
     "onDestoryData\0PictureDelegate*\0"
     "pictureDelegate\0Namespace::ImageReaderObject::SSMutex\0"
     "ansMutex\0Namespace::ImageReaderObject::SPixmap\0"
-    "ans"
+    "ans\0getAMovie"
 };
 #undef QT_MOC_LITERAL
 
@@ -62,7 +63,7 @@ static const uint qt_meta_data_ImageReaderObject[] = {
        7,       // revision
        0,       // classname
        0,    0, // classinfo
-       1,   14, // methods
+       2,   14, // methods
        0,    0, // properties
        0,    0, // enums/sets
        0,    0, // constructors
@@ -70,10 +71,12 @@ static const uint qt_meta_data_ImageReaderObject[] = {
        0,       // signalCount
 
  // slots: name, argc, parameters, tag, flags
-       1,    7,   19,    2, 0x0a /* Public */,
+       1,    7,   24,    2, 0x0a /* Public */,
+      15,    5,   39,    2, 0x0a /* Public */,
 
  // slots: parameters
     QMetaType::Void, QMetaType::QSize, QMetaType::QString, 0x80000000 | 5, 0x80000000 | 7, 0x80000000 | 9, 0x80000000 | 11, 0x80000000 | 13,    3,    4,    6,    8,   10,   12,   14,
+    QMetaType::Void, QMetaType::QSize, QMetaType::QString, 0x80000000 | 5, 0x80000000 | 7, 0x80000000 | 9,    3,    4,    6,    8,   10,
 
        0        // eod
 };
@@ -85,6 +88,7 @@ void ImageReaderObject::qt_static_metacall(QObject *_o, QMetaObject::Call _c, in
         Q_UNUSED(_t)
         switch (_id) {
         case 0: _t->getAPicture((*reinterpret_cast< const QSize(*)>(_a[1])),(*reinterpret_cast< const QString(*)>(_a[2])),(*reinterpret_cast< Namespace::ImageReaderObject::SMutex(*)>(_a[3])),(*reinterpret_cast< Namespace::ImageReaderObject::SBool(*)>(_a[4])),(*reinterpret_cast< PictureDelegate*(*)>(_a[5])),(*reinterpret_cast< Namespace::ImageReaderObject::SSMutex(*)>(_a[6])),(*reinterpret_cast< Namespace::ImageReaderObject::SPixmap(*)>(_a[7]))); break;
+        case 1: _t->getAMovie((*reinterpret_cast< const QSize(*)>(_a[1])),(*reinterpret_cast< const QString(*)>(_a[2])),(*reinterpret_cast< Namespace::ImageReaderObject::SMutex(*)>(_a[3])),(*reinterpret_cast< Namespace::ImageReaderObject::SBool(*)>(_a[4])),(*reinterpret_cast< PictureDelegate*(*)>(_a[5]))); break;
         default: ;
         }
     } else if (_c == QMetaObject::RegisterMethodArgumentMetaType) {
@@ -101,6 +105,15 @@ void ImageReaderObject::qt_static_metacall(QObject *_o, QMetaObject::Call _c, in
                 *reinterpret_cast<int*>(_a[0]) = qRegisterMetaType< Namespace::ImageReaderObject::SPixmap >(); break;
             case 5:
                 *reinterpret_cast<int*>(_a[0]) = qRegisterMetaType< Namespace::ImageReaderObject::SSMutex >(); break;
+            }
+            break;
+        case 1:
+            switch (*reinterpret_cast<int*>(_a[1])) {
+            default: *reinterpret_cast<int*>(_a[0]) = -1; break;
+            case 3:
+                *reinterpret_cast<int*>(_a[0]) = qRegisterMetaType< Namespace::ImageReaderObject::SBool >(); break;
+            case 2:
+                *reinterpret_cast<int*>(_a[0]) = qRegisterMetaType< Namespace::ImageReaderObject::SMutex >(); break;
             }
             break;
         }
@@ -132,13 +145,13 @@ int ImageReaderObject::qt_metacall(QMetaObject::Call _c, int _id, void **_a)
     if (_id < 0)
         return _id;
     if (_c == QMetaObject::InvokeMetaMethod) {
-        if (_id < 1)
+        if (_id < 2)
             qt_static_metacall(this, _c, _id, _a);
-        _id -= 1;
+        _id -= 2;
     } else if (_c == QMetaObject::RegisterMethodArgumentMetaType) {
-        if (_id < 1)
+        if (_id < 2)
             qt_static_metacall(this, _c, _id, _a);
-        _id -= 1;
+        _id -= 2;
     }
     return _id;
 }

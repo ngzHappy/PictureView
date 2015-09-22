@@ -6,7 +6,11 @@
 #include <ctime>
 #include <QTextLayout>
 #include <QFontMetrics>
+#include <QTimer>
 #include <QSpacerItem>
+#include <QDebug>
+#include <atomic>
+#include "PictureModel.hpp"
 #include "PictureViewButton.hpp"
 
 PictureDelegate::~PictureDelegate(){
@@ -43,10 +47,17 @@ PictureDelegate::PictureDelegate(PictureListView * p):
 	if (super) {
 		auto * imageReader_ = super->getImageReader();
 		if (imageReader_) {
+
 			this->connect(this, &PictureDelegate::getAPicture,
 				imageReader_, &ImageReaderObject::getAPicture,
 				Qt::ConnectionType::QueuedConnection
 				);
+
+			this->connect(this, &PictureDelegate::getAMovie,
+				imageReader_, &ImageReaderObject::getAMovie,
+				Qt::ConnectionType::QueuedConnection
+				);
+
 		}
 	}
 
@@ -68,6 +79,88 @@ PictureDelegate::PictureDelegate(PictureListView * p):
 
     (void) _;
 }
+
+ 
+namespace {
+	std::atomic<int> movie_count(0);
+}
+ 
+int PictureDelegateMovie::count() {
+	return movie_count.load();
+}
+
+PictureDelegateMovie::
+PictureDelegateMovie( 
+	const QString  fileName,
+	Namespace::ImageReaderObject::SMutex onDestoryMutex1 /* 防止对象析构 */,
+	Namespace::ImageReaderObject::SBool onDestoryData1  /* 查看对象是否已经析构 */
+	):QMovie(fileName) {
+
+	this->startTimer( 100 );
+	onDestoryMutex = onDestoryMutex1;
+	onDestoryData  = onDestoryData1;
+
+	++movie_count;
+ 
+}
+
+PictureDelegateMovie * PictureDelegateMovie::instance() {
+	/* 避免自身被删除 */
+	movie = this->shared_from_this();
+
+	/* 读取图片 */
+	this->connect(this, &PictureDelegateMovie::frameChanged,
+		this, &PictureDelegateMovie::_updateFrame);
+
+	/* 错误删除 */
+	this->connect(
+		this, &PictureDelegateMovie::error,
+		this, &PictureDelegateMovie::_error
+		);
+
+	this->start();
+
+	/*  */
+	return this;
+}
+
+void PictureDelegateMovie::_error(QImageReader::ImageReaderError) {
+	if (false == movie) { return; }
+	/* 删除自身 */
+	return _destory();
+}
+
+void PictureDelegateMovie::_destory() {
+	if (false == movie) { return; }
+	/* 删除自身 */
+	this->stop();
+	movie = std::shared_ptr<PictureDelegateMovie>( );
+}
+
+void PictureDelegateMovie::_updateFrame(int) {
+	if (false == movie) { return; }
+	auto pixmap__ = this->currentPixmap();
+
+	{
+		/* 检查对象是否已经析构 */
+		std::unique_lock< std::mutex > _mutex__( *onDestoryMutex );
+		if (*onDestoryData) { 
+		}
+		else {
+			emit updateFrame(pixmap__);
+			return;
+		}
+	}
+
+	/* 删除自身 */
+	_destory();
+	return;
+}
+
+PictureDelegateMovie::
+~PictureDelegateMovie() {
+	--movie_count;
+ }
 
 void PictureDelegate::setEditorData(
     const QModelIndex & index
@@ -97,9 +190,29 @@ AbstractItemWidget * PictureDelegate::instance(
 		qDebug() << "core error!!";
 		return this;
 	}
+
 	this->setParent(parent);
 	this->beforePaint(option, index);
-	 
+
+	{
+		const auto * model_ = index.model();
+		if (model_) {
+			isMoive_ =
+				( model_->data( index ,PictureModel::Suffix_Role ).toString() == "gif");
+		}
+
+		if (isMoive_) {
+			getAMovie(
+				option.rect.size(),
+				stringData,
+				onDestoryMutex_,
+				onDestoryData_,
+				this
+				);
+			return this;
+		}
+	}
+
 	/* 获取图片 */
 	emit getAPicture(
 		option.rect.size(),
@@ -114,8 +227,41 @@ AbstractItemWidget * PictureDelegate::instance(
 	return this;
 }
 
+#ifdef _DEBUG
+static int movie_count_ = 0;
+#endif
+
+void PictureDelegateMovie::timerEvent(QTimerEvent * event) {
+	QMovie::timerEvent(event);
+	_check_destory();
+}
+
+void PictureDelegateMovie::_check_destory() {
+	bool need_destory_ = false;
+
+	{
+		std::unique_lock< std::mutex > _mutex__(*onDestoryMutex);
+		if (*onDestoryData) {
+			need_destory_ = true;
+		}
+	}
+
+	if ( need_destory_ ) {
+		movie = std::shared_ptr<PictureDelegateMovie>();
+	}
+}
 
 void PictureDelegate::paintEvent(QPaintEvent *) {
+
+#ifdef _DEBUG	
+	{
+		int movie_count_ago = movie_count_;
+		movie_count_ = PictureDelegateMovie::count();
+		if(movie_count_!= movie_count_ago)
+		{qDebug() << movie_count_; }
+	}
+#endif
+
 	if (isPainting) { return; }
 	if (objectManager == 0) { return; }
 
@@ -139,7 +285,33 @@ void PictureDelegate::paintEvent(QPaintEvent *) {
 		painter.drawImage(0, 0, backGroundImage);
 	}
 
-	do{
+	if (isMoive_) {
+
+		/* 绘制movie */
+		const auto & readedPicture_ = movieFrame ;
+		if ((readedPicture_.width() > 0) && (readedPicture_.height() > 0)) {
+			/* 绘制图片 */
+			QPainter painter(this);
+			int x = readedPicture_.width();
+			int y = readedPicture_.height();
+			x -= this->width();
+			y -= this->height();
+			x /= -2;
+			y /= -2;
+
+			painter.drawPixmap((x > 0 ? x : 0), (y > 0 ? y : 0), readedPicture_);
+
+			if (false == isFirstPainted) {
+				/* 记录第一次绘制完成 */
+				isFirstPainted = true;
+				return _mouse_enter();
+			}
+
+			return;
+		}
+
+	}else do{
+
 		/* 尝试绘制图片 */
 		if ( false == readedPictureMutex->try_lock_shared() ) { break; }
         QImage readedPicture_s_;
@@ -152,6 +324,7 @@ void PictureDelegate::paintEvent(QPaintEvent *) {
 			*/
 			readedPicture_s_ = (*readedPicture);
 		}
+
 		const auto & readedPicture_ = readedPicture_s_;
 		if ( (readedPicture_.width() > 0) && (readedPicture_.height() > 0 ) ) {
 			/* 绘制图片 */
@@ -176,6 +349,7 @@ void PictureDelegate::paintEvent(QPaintEvent *) {
 		else {
 			break;
 		}
+
 	} while (0);
 
     /* 如果图片不存在绘制字符 */
@@ -304,9 +478,15 @@ bool PictureDelegate::event(QEvent * e){
 
     if( dynamic_cast<PictureDelegateUpdateEvent *>(e) ){
         this->update();
+		return true;
     }
     return SuperType::event(e);
 
+}
+
+void PictureDelegate::updateFrame(QPixmap p) {
+	movieFrame = p;
+	this->update();
 }
 
 /*  */

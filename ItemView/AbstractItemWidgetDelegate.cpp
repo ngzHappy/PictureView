@@ -140,7 +140,11 @@ public:
 			int gcDataSizeAgo = gcDataSize;
 			gcDataSize = int(manager.data.size());
 			if ( (gcDataSize == gcDataSizeAgo)/* && (gcDataSize<20)*/ ) {
-				/* 避免过于频繁调度gc */
+				/* 
+				避免过于频繁调度gc
+				增加下一次调用gc的概率
+				*/
+				++gcDataSize;
 				return;
 			}
 #ifdef _DEBUG
@@ -263,7 +267,7 @@ private:
 			}
 		}
 
-		for (const auto &i : manager.data) {
+		for (const auto &i : manager_data) {
 
 			if (false == i.second) { continue; }
 

@@ -39,6 +39,11 @@ public:
         return QModelIndex();
     }
 
+	enum {
+		Suffix_Role = Qt::UserRole+1,
+		CompleteBaseName_Role,
+	};
+
     QVariant data(
             const QModelIndex & index,
             int role  ) const override ;
@@ -49,8 +54,10 @@ public:
         ~PictureModelItemData(){}
         PictureModelItemData() {}
 
-        QString filePath ;
-
+        QString filePath        ;
+		QString suffix          ;
+		QString completeBaseName;
+		QString fileName()const { return completeBaseName + "." + suffix; }
     };
 
     typedef std::vector<PictureModelItemData> DataPoolType ;
