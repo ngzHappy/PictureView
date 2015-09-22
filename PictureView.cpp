@@ -6,6 +6,8 @@
 #include <thread>
 #include <atomic>
 #include <QApplication>
+#include <QMovie>
+#include <QFileInfo>
 
 namespace  {
 QSize bestSize( const QSize & source,const QSize & tar ){
@@ -45,13 +47,17 @@ return QSize( int(tw),int(th) );
 class PictureView::ThisPrivate{
 public:
     PictureView * super ;
+
+	/* movie 位于主线程 */
+	QMovie * movie = 0;
+
     ThisPrivate(PictureView * s):super(s){
         scene_ = new QGraphicsScene(s);
         s->setScene(scene_);
     }
 
     ~ThisPrivate(){
-
+		delete movie;
     }
 
     QGraphicsPixmapItem * item_ = 0;
@@ -74,6 +80,12 @@ public:
         };
 
         {
+
+			if (movie) {
+				delete movie;
+				movie = 0;
+			}
+
             Locker__ _1_(&(setPictureIng));
 
             /* 创建独立拷贝 */
@@ -159,6 +171,56 @@ public:
 		
     }
 
+	void setMoviePicture(
+		const QString  image__
+		) {
+
+		if (setPictureIng) {
+			return;
+		}
+				
+		class Locker__ {
+			bool * b_;
+		public:
+			Locker__(bool * _b) :b_(_b) { *b_ = true; }
+			~Locker__() { *b_ = false; }
+		};
+
+		{
+			Locker__ _1_(&(setPictureIng));
+			if (movie) {
+				delete movie;
+				movie = 0;
+			}
+
+			movie = new QMovie( image__ );
+
+			movie->connect(movie, &QMovie::frameChanged,
+				[this](int) { updateMoviePixmap(); }
+			);
+
+			movie->start();
+						
+		}
+
+	}
+
+	void updateMoviePixmap(   ) {
+
+		if (0 == movie) { return; }
+		if (scene_ == 0) { return; }
+		if (item_==0) {
+			item_ = new QGraphicsPixmapItem;
+			scene_->addItem( item_ );
+		}
+
+		pixmap_ = movie->currentImage() ;
+		pictureSize_ = pixmap_.size();
+		fitToSize( super->size() );
+		
+	}
+
+
 };
 
 void PictureView::resizeEvent(QResizeEvent *event){
@@ -167,7 +229,13 @@ void PictureView::resizeEvent(QResizeEvent *event){
 }
 
 void PictureView::setPicture(const QString   v) {
-    thisp->setPicture(v);
+	QFileInfo info( v );
+	if (info.suffix().toLower().simplified() == "gif") {
+		thisp->setMoviePicture(v);
+	}
+	else {
+		thisp->setPicture(v);
+	}
 }
 
 PictureView::PictureView(QWidget * p):
@@ -178,7 +246,8 @@ SuperType(p){
 }
 
 PictureView::~PictureView(){
-    delete thisp ;thisp=0;
+    delete thisp ;
+	thisp=0;
 }
 
 

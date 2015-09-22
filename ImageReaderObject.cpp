@@ -212,11 +212,13 @@ void ImageReaderObject::getAMovie(
 			);
 
 		_ans->instance();
+		auto iSize_ = _ans->frameRect().size();
 
-		if (_ans->isValid()) {
-			auto iSize_ = _ans->frameRect().size();
-			auto best_size = bestSize(imageSize, iSize_);
-			_ans->setScaledSize(  best_size );
+		if ( _ans->isValid() && iSize_.width() >0 ) {
+			auto best_size = bestSize( imageSize, iSize_ );
+			if (best_size.width() > 0){
+				_ans->setScaledSize( best_size );
+			}
 		}
 		else {
 			_ans->movie = std::shared_ptr<PictureDelegateMovie>();
